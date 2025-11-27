@@ -92,7 +92,11 @@ const joinRoom = asyncHandler(async (req, res) => {
     res.status(401);
     throw new Error('Incorrect passcode');
   }
-
+  
+  if(room.kind=='personal'){
+    res.status(400);
+    throw new Error('Cannot join a personal room');
+  }
   // Add user to members if not already present
   if (!room.roommembers.includes(req.user.id)) {
     room.roommembers.push(req.user.id);
