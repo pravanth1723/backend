@@ -33,7 +33,7 @@ const createRoom = asyncHandler(async (req, res) => {
     createdBy: req.user.id,
   });
 
-  res.status(201).json({ category: 'success', message: 'Room created successfully', data: room });
+  res.status(200).json({ category: 'success', message: 'Room created successfully', data: room });
 });
 
 /**

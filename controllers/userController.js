@@ -45,9 +45,9 @@ const loginUser = asyncHandler(async (req, res) => {
             },
         },
             process.env.ACCESS_TOKEN_SECRET,
-            { expiresIn: "21m" }
-        );
-        console.log('success');
+            { expiresIn: "30m" }
+        );        
+
         res.cookie('jwt', accesstoken, {
             httpOnly: true,
             secure: true,
@@ -63,4 +63,22 @@ const current = asyncHandler(async (req, res) => {
     res.status(200).json({ category: 'success', message: 'Current user retrieved successfully', data: req.user });
 });
 
-module.exports = { registerUser, loginUser, current };
+const validateUser = asyncHandler(async (req, res) => {
+
+    if (req.user) {
+        return res.status(200).json({ category: 'success', message: 'User authenticated', data: { userId: req.user.username, id: req.user.id } });
+    } else {
+        return res.status(401).json({ category: 'error', message: 'Not authenticated' });
+    }
+});
+
+const logoutUser = asyncHandler(async (req, res) => {
+    res.clearCookie('jwt', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'Strict'
+    });
+    return res.status(200).json({ category: 'success', message: 'Logged out successfully' });
+});
+
+module.exports = { registerUser, loginUser, current, validateUser, logoutUser };
