@@ -10,7 +10,6 @@ const mongoose = require('mongoose');
  */
 const getExpenses = asyncHandler(async (req, res) => {
   const roomId = req.params.id;
-  console.log('roomId param:', roomId);
   
   if (roomId) {
     const room = await Room.findById(roomId);
@@ -19,7 +18,6 @@ const getExpenses = asyncHandler(async (req, res) => {
     }
 
     const expenses = await Expense.find({ roomId: roomId }).sort({ createdAt: -1 });
-    console.log('Expenses for room:', expenses);
     return res.status(200).json({ category: 'success', message: 'Expenses retrieved successfully', data: expenses });
   }
 

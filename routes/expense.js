@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { getExpenses, getExpense, createExpense, updateExpense, deleteExpense } = require('../controllers/expenseController');
+const { getExpenses, getExpense, createExpense, updateExpense, deleteExpense } = require('../controllers/expense');
 const validateToken = require('../middleware/validateTokenHandler');
 
 router.use(validateToken); // protect expense operations

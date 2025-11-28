@@ -21,7 +21,6 @@ const validateToken = asyncHandler(async (req, res, next) => {
   // If not in header, check for token in cookies (e.g., "jwt" cookie)
   if (!token && req.cookies && req.cookies.jwt) {
     token = req.cookies.jwt;
-    console.log("token from cookie:", token);
   }
 
   if (!token) {
@@ -31,7 +30,6 @@ const validateToken = asyncHandler(async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-    console.log("Decoded JWT:", decoded);
     req.user = decoded.user || decoded; // support both {user, ...} and plain payloads
     next();
   } catch (err) {

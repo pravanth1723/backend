@@ -1,8 +1,6 @@
 
 const { constants } = require('../constants');
-console.log('bye');
 const errorhandler = (err, req, res, next) => {
-    console.log('statusCode');
     const statusCode = res.statusCode ? res.statusCode : 500;
     switch (statusCode) {
         case constants.VALIDATION_ERROR:
@@ -13,7 +11,6 @@ const errorhandler = (err, req, res, next) => {
             });
             break;
         case constants.NOT_FOUND:
-            console.log('lan')
             res.json({
                 title: "Not Found",
                 message: err.message,
@@ -43,7 +40,6 @@ const errorhandler = (err, req, res, next) => {
             break;
 
         default:
-            console.log("All goods");
             break;
     }
 };

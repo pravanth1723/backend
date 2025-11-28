@@ -9,9 +9,9 @@ const port = 5000;
 app.use(cors({origin: 'http://localhost:3000',credentials: true}));
 app.use(cookieParser());
 connectDb();app.use(express.json());
-app.use('/api/users', require('./routes/userRoute'));
-app.use('/api/rooms', require('./routes/roomRoute'));
-app.use('/api/expenses', require('./routes/expenseRoute'));
+app.use('/api/users', require('./routes/user'));
+app.use('/api/rooms', require('./routes/room'));
+app.use('/api/expenses', require('./routes/expense'));
 
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
