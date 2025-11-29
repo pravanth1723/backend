@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const {getRooms, getRoom, createRoom, updateRoom,joinRoom,leaveRoom,changePasscode,deleteRoom} = require('../controllers/room');
+const {getRooms, getRoom, createRoom, updateRoom,joinRoom,leaveRoom,changePasscode,deleteRoom,calculateBestOrganizer} = require('../controllers/room');
 const validateToken = require('../middleware/validateTokenHandler');
 const { checkRoomMembership, checkRoomAdmin } = require('../middleware/roomAuth');
 
@@ -10,6 +10,7 @@ router.get('/',getRooms);
 router.post('/', createRoom);
 router.post('/join/:id',joinRoom);
 router.get('/:id',checkRoomMembership,getRoom);
+router.get('/cal-best-organizer/:id',calculateBestOrganizer);
 router.put('/:id', checkRoomMembership,updateRoom);
 router.put('/change-passcode/:id',checkRoomAdmin, changePasscode);
 router.put('/exit/:id',leaveRoom);

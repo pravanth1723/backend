@@ -150,6 +150,72 @@ const deleteRoom = asyncHandler(async (req, res) => {
   res.status(200).json({ category: 'success', message: 'Room deleted successfully' });
 });
 
+const calculateBestOrganizer = asyncHandler(async (req, res) => {
+  const roomId = req.params.id;
+  const Expense = require('../models/expense');
+
+  if (!mongoose.Types.ObjectId.isValid(roomId)) {
+    return res.status(400).json({ category: 'error', message: 'Invalid room ID' });
+  }
+
+  const room = await Room.findById(roomId);
+  if (!room) {
+    return res.status(404).json({ category: 'error', message: 'Room not found' });
+  }
+
+  // Get all expenses for this room
+  const expenses = await Expense.find({ roomId: roomId });
+  
+  if (expenses.length === 0) {
+    return res.status(200).json({ 
+      category: 'success', 
+      message: 'No expenses found for this room', 
+      data: { bestOrganizer: null, netContribution: 0 } 
+    });
+  }
+
+  // Calculate net contribution for each person
+  const netContributions = {};
+
+  expenses.forEach(expense => {
+    // Calculate total paid by each person
+    expense.spentBy.forEach(payer => {
+      if (!netContributions[payer.name]) {
+        netContributions[payer.name] = { paid: 0, split: 0 };
+      }
+      netContributions[payer.name].paid += payer.amount;
+    });
+
+    // Calculate total split for each person
+    expense.spentFor.forEach(beneficiary => {
+      if (!netContributions[beneficiary.name]) {
+        netContributions[beneficiary.name] = { paid: 0, split: 0 };
+      }
+      netContributions[beneficiary.name].split += beneficiary.amount;
+    });
+  });
+
+  // Find person with highest net contribution (paid - split)
+  let bestOrganizer = null;
+  let maxNetContribution = -Infinity;
+
+  for (const [person, amounts] of Object.entries(netContributions)) {
+    const netContribution = amounts.paid - amounts.split;
+    if (netContribution > maxNetContribution) {
+      maxNetContribution = netContribution;
+      bestOrganizer = person;
+    }
+  }
+
+  res.status(200).json({ 
+    category: 'success', 
+    message: 'Best organizer calculated successfully', 
+    data: { 
+      bestOrganizer,
+    }
+  });
+});
+
 module.exports = {
   getRooms,
   getRoom,
@@ -158,5 +224,6 @@ module.exports = {
   joinRoom,
   leaveRoom,
   changePasscode,
-  deleteRoom
+  deleteRoom,
+  calculateBestOrganizer,
 };
