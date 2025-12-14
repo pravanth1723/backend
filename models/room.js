@@ -37,6 +37,7 @@ const roomSchema = new Schema(
     updatedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     title: { type: String},
     organizer: { type: String },
+    organizerUpiId: { type: String },
   },
   {
     timestamps: true, // createdAt and updatedAt

@@ -70,6 +70,7 @@ const updateRoom = asyncHandler(async (req, res) => {
   room.updatedBy = req.user.id;
   room.title = title || room.title;
   room.organizer = organizer || room.organizer;
+  room.organizerUpiId = req.body.organizerUpiId || room.organizerUpiId;
   
   const updatedRoom = await room.save();
   res.status(200).json({ category: 'success', message: 'Room updated successfully', data: updatedRoom });
