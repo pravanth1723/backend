@@ -47,10 +47,13 @@ const loginUser = asyncHandler(async (req, res) => {
             { expiresIn: "30m" }
         );        
 
+        // Set cookie with environment-aware options so it works in dev (HTTP)
+        // and in production (HTTPS + cross-site if needed).
         res.cookie('jwt', accesstoken, {
             httpOnly: true,
-            secure: true,
-            sameSite: 'Strict'
+            secure: process.env.NODE_ENV === 'production', // secure cookies only in prod (requires HTTPS)
+            sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // 'None' in prod for cross-site, 'Lax' for dev
+            maxAge: 30 * 60 * 1000,
         });
         return res.status(200).json({ category: 'success', message: 'Login successful', data: { username: user.username, id: user.id } });
     } else {
@@ -72,10 +75,12 @@ const validateUser = asyncHandler(async (req, res) => {
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
+    // Clear cookie with matching options used when setting it.
     res.clearCookie('jwt', {
         httpOnly: true,
-        secure: true,
-        sameSite: 'Strict'
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+        path: '/',
     });
     return res.status(200).json({ category: 'success', message: 'Logged out successfully' });
 });
