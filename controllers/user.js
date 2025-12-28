@@ -85,4 +85,80 @@ const logoutUser = asyncHandler(async (req, res) => {
     return res.status(200).json({ category: 'success', message: 'Logged out successfully' });
 });
 
-module.exports = { registerUser, loginUser, current, validateUser, logoutUser };
+const addIncome = asyncHandler(async (req, res) => {
+    console.log("Add income called");
+    const income = req.body;
+    console.log(income);
+    console.log(req.body);
+    console.log(req.user.id);
+    if (!income) {
+        return res.status(400).json({ category: 'error', message: 'Income is required' });
+    }
+    console.log(req.user.id);
+    const user = await User.findById(req.user.id);
+    if (!user) {
+        return res.status(404).json({ category: 'error', message: 'User not found' });
+    }
+    console.log(income);
+    user.incomes.push(income);
+    await user.save();
+
+    return res.status(200).json({ category: 'success', message: 'Income added successfully' });
+});
+
+const fetchIncomes = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+        return res.status(404).json({ category: 'error', message: 'User not found' });
+    }
+    return res.status(200).json({ category: 'success', message: 'Incomes retrieved successfully', data: user.incomes });
+});
+
+const updateIncome = asyncHandler(async (req, res) => {
+    const updatedIncome = req.body;
+    const incomeId = req.params.id;
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+        return res.status(404).json({ category: 'error', message: 'User not found' });
+    }
+
+    const income = user.incomes.id(incomeId);
+    if (!income) {
+        return res.status(404).json({ category: 'error', message: 'Income not found' });
+    }
+
+    Object.assign(income, updatedIncome); // update fields
+    await user.save();
+
+    return res.status(200).json({
+        category: 'success',
+        message: 'Income updated successfully',
+        income
+    });
+});
+
+
+const deleteIncome = asyncHandler(async (req, res) => {
+    const incomeId = req.params.id;
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+        return res.status(404).json({ category: 'error', message: 'User not found' });
+    }
+
+    const income = user.incomes.id(incomeId);
+    if (!income) {
+        return res.status(404).json({ category: 'error', message: 'Income not found' });
+    }
+
+    income.deleteOne(); // 🔥 removes subdocument
+    await user.save();
+
+    return res.status(200).json({
+        category: 'success',
+        message: 'Income deleted successfully'
+    });
+});
+
+module.exports = { registerUser, loginUser, current, validateUser, logoutUser, addIncome, fetchIncomes, updateIncome, deleteIncome };

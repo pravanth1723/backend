@@ -21,6 +21,15 @@ const userSchema = new Schema(
       type: String,
       required: [true, 'Please add password'],
     },
+    incomes: {
+      type: [
+        {
+          note: { type: String, required: true },
+          amount: { type: Number, required: true },
+          date: { type: Date, required: true }
+        }
+      ]
+    },
   },
   {
     // Only store createdAt (no updatedAt)
