@@ -1,5 +1,6 @@
 const asyncHandler = require('express-async-handler');
 const Room = require('../models/room');
+const User = require('../models/user');
 const mongoose = require('mongoose');
 
 const getRooms = asyncHandler(async (req, res) => {
@@ -24,11 +25,34 @@ const getRooms = asyncHandler(async (req, res) => {
  * - ensures the creator is added to members as admin
  */
 const createRoom = asyncHandler(async (req, res) => {
-  const { roomCode, passcode, kind, name, notes, members } = req.body;
+  let { roomCode, passcode, kind, name, notes, members } = req.body;
   if (!roomCode) {
     return res.status(400).json({ category: 'error', message: 'roomCode is required' });
   }
-
+  console.log('Creating room with data:', req.body);
+  console.log('User creating room:', req.user.id);
+  // If kind is personal, fetch user methods and add as members
+  if (kind === 'personal') {
+    const user = await User.findById(req.user.id);
+    console.log('Fetched user for personal room:', user.methods);
+    if (user && user.methods && user.methods.length > 0) {
+      console.log(user.methods.map(method => method.name));
+      members = user.methods.map(method => method.name);
+      console.log('Members set from user methods for personal room:', members);
+    }
+  }
+console.log('Final members list:', members);
+  console.log('About to create room with:', {
+    roomCode,
+    passcode,
+    kind,
+    name: roomCode,
+    notes: notes || null,
+    members: members,
+    roommembers: [req.user.id],
+    createdBy: req.user.id,
+  });
+  
   const room = await Room.create({
     roomCode,
     passcode: passcode,
@@ -40,6 +64,7 @@ const createRoom = asyncHandler(async (req, res) => {
     createdBy: req.user.id,
   });
 
+  console.log('Room created successfully:', room);
   res.status(200).json({ category: 'success', message: 'Room created successfully', data: room });
 });
 

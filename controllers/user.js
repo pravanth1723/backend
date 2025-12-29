@@ -1,5 +1,6 @@
 const asyncHandler = require('express-async-handler');
 const User = require('../models/user');
+const Room = require('../models/room');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -161,4 +162,74 @@ const deleteIncome = asyncHandler(async (req, res) => {
     });
 });
 
-module.exports = { registerUser, loginUser, current, validateUser, logoutUser, addIncome, fetchIncomes, updateIncome, deleteIncome };
+const addMethod = asyncHandler(async (req, res) => {
+    const method = req.body;
+    if (!method) {
+        return res.status(400).json({ category: 'error', message: 'Method is required' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+        return res.status(404).json({ category: 'error', message: 'User not found' });
+    }
+
+    user.methods.push(method);
+    await user.save();
+    
+    // Push method name to all user's personal rooms
+    await Room.updateMany(
+        { 
+            createdBy: req.user.id, 
+            kind: 'personal' 
+        },
+        { 
+            $push: { members: method.name } 
+        }
+    );
+    
+    return res.status(200).json({ category: 'success', message: 'Method added successfully' });
+});
+
+const getMethods = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+        return res.status(404).json({ category: 'error', message: 'User not found' });
+    }
+    return res.status(200).json({ category: 'success', message: 'Methods retrieved successfully', data: user.methods });
+});
+
+const deleteMethod = asyncHandler(async (req, res) => {
+    const methodId = req.params.id;
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+        return res.status(404).json({ category: 'error', message: 'User not found' });
+    }
+
+    const method = user.methods.id(methodId);
+    if (!method) {
+        return res.status(404).json({ category: 'error', message: 'Method not found' });
+    }
+
+    const methodName = method.name;
+    method.deleteOne(); // removes subdocument
+    await user.save();
+
+    // Remove method name from all user's personal rooms
+    await Room.updateMany(
+        { 
+            createdBy: req.user.id, 
+            kind: 'personal' 
+        },
+        { 
+            $pull: { members: methodName } 
+        }
+    );
+
+    return res.status(200).json({
+        category: 'success',
+        message: 'Method deleted successfully'
+    });
+});
+
+module.exports = { registerUser, loginUser, current, validateUser, logoutUser, addIncome, fetchIncomes, updateIncome, deleteIncome, addMethod, getMethods, deleteMethod };

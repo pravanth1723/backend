@@ -7,7 +7,7 @@ const { checkRoomMembership, checkRoomAdmin } = require('../middleware/roomAuth'
 router.use(validateToken); 
 
 router.get('/',getRooms);
-router.post('/', createRoom);
+router.post('/',validateToken, createRoom);
 router.post('/join/:id',joinRoom);
 router.get('/:id',checkRoomMembership,getRoom);
 router.get('/cal-best-organizer/:id',calculateBestOrganizer);

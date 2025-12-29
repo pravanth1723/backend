@@ -30,6 +30,14 @@ const userSchema = new Schema(
         }
       ]
     },
+    methods: {
+      type: [
+        {
+          name: { type: String, required: true },
+          type: { type: String, required: true }
+        }
+      ]
+    }
   },
   {
     // Only store createdAt (no updatedAt)

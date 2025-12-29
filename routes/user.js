@@ -1,6 +1,6 @@
 const express=require('express');
 const router=express.Router();
-const {registerUser,loginUser,current,validateUser,logoutUser,addIncome,fetchIncomes,updateIncome,deleteIncome} = require('../controllers/user');
+const {registerUser,loginUser,current,validateUser,logoutUser,addIncome,fetchIncomes,updateIncome,deleteIncome,addMethod,getMethods,deleteMethod} = require('../controllers/user');
 const validateToken = require('../middleware/validateTokenHandler');
 
 router.post("/register",registerUser);
@@ -20,5 +20,11 @@ router.get("/incomes",validateToken,fetchIncomes);
 router.put("/income/:id",validateToken,updateIncome);
 
 router.delete("/income/:id",validateToken,deleteIncome);
+
+router.post("/methods",validateToken,addMethod);
+
+router.get("/methods",validateToken,getMethods);
+
+router.delete("/methods/:id",validateToken,deleteMethod);
 
 module.exports=router;
