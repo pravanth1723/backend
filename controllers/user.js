@@ -1,6 +1,8 @@
 const asyncHandler = require('express-async-handler');
 const User = require('../models/user');
 const Room = require('../models/room');
+const Expense = require('../models/expense');
+
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -46,7 +48,7 @@ const loginUser = asyncHandler(async (req, res) => {
         },
             process.env.ACCESS_TOKEN_SECRET,
             { expiresIn: "30m" }
-        );        
+        );
 
         // Set cookie with environment-aware options so it works in dev (HTTP)
         // and in production (HTTPS + cross-site if needed).
@@ -175,18 +177,18 @@ const addMethod = asyncHandler(async (req, res) => {
 
     user.methods.push(method);
     await user.save();
-    
+
     // Push method name to all user's personal rooms
     await Room.updateMany(
-        { 
-            createdBy: req.user.id, 
-            kind: 'personal' 
+        {
+            createdBy: req.user.id,
+            kind: 'personal'
         },
-        { 
-            $push: { members: method.name } 
+        {
+            $push: { members: method.name }
         }
     );
-    
+
     return res.status(200).json({ category: 'success', message: 'Method added successfully' });
 });
 
@@ -217,12 +219,12 @@ const deleteMethod = asyncHandler(async (req, res) => {
 
     // Remove method name from all user's personal rooms
     await Room.updateMany(
-        { 
-            createdBy: req.user.id, 
-            kind: 'personal' 
+        {
+            createdBy: req.user.id,
+            kind: 'personal'
         },
-        { 
-            $pull: { members: methodName } 
+        {
+            $pull: { members: methodName }
         }
     );
 
@@ -232,4 +234,107 @@ const deleteMethod = asyncHandler(async (req, res) => {
     });
 });
 
-module.exports = { registerUser, loginUser, current, validateUser, logoutUser, addIncome, fetchIncomes, updateIncome, deleteIncome, addMethod, getMethods, deleteMethod };
+const fetchIncomeTimePeriod = asyncHandler(async (req, res) => {
+    const { fromDate, toDate } = req.params;
+    if (!fromDate || !toDate) {
+        return res.status(400).json({
+            category: 'error',
+            message: 'fromDate and toDate are required'
+        });
+    }
+    const startDate = new Date(fromDate);
+    const endDate = new Date(toDate);
+    endDate.setHours(23, 59, 59, 999);
+    const user = await User.findById(req.user.id);
+    if (!user) {
+        return res.status(404).json({
+            category: 'error',
+            message: 'User not found'
+        });
+    }
+
+    // Filter incomes in range
+    const filteredIncomes = user.incomes.filter(income => {
+        const incomeDate = new Date(income.date);
+        return incomeDate >= startDate && incomeDate <= endDate;
+    });
+    const totalIncome = filteredIncomes.reduce(
+        (sum, income) => sum + Number(income.amount || 0),
+        0
+    );
+    return res.status(200).json({
+        category: 'success',
+        message: 'Income sum retrieved successfully',
+        data: {
+            totalIncome
+        }
+    });
+});
+
+const fetchSpendsTimePeriod = asyncHandler(async (req, res) => {
+    const { fromDate, toDate } = req.params;
+
+    if (!fromDate || !toDate) {
+        return res.status(400).json({
+            category: 'error',
+            message: 'fromDate and toDate are required'
+        });
+    }
+
+    const startDate = new Date(fromDate);
+    const endDate = new Date(toDate);
+    endDate.setHours(23, 59, 59, 999);
+
+    // 1️⃣ Fetch user's personal rooms
+    const rooms = await Room.find({
+        createdBy: req.user.id,
+        kind: 'personal'
+    }).select('_id name');
+
+    if (!rooms.length) {
+        return res.status(200).json({
+            category: 'success',
+            message: 'No personal rooms found',
+            data: []
+        });
+    }
+
+    const roomIds = rooms.map(r => r._id);
+
+    // 2️⃣ Aggregate expenses from Expense collection
+    const expensesByRoom = await Expense.aggregate([
+        {
+            $match: {
+                roomId: { $in: roomIds },
+                createdAt: { $gte: startDate, $lte: endDate }
+            }
+        },
+        {
+            $group: {
+                _id: '$roomId',
+                totalSpent: { $sum: '$total' }
+            }
+        }
+    ]);
+
+    // 3️⃣ Convert aggregation output to lookup map
+    const spendMap = {};
+    expensesByRoom.forEach(e => {
+        spendMap[e._id.toString()] = e.totalSpent;
+    });
+
+    // 4️⃣ Build response (include zero-spend rooms)
+    const spendsByRoom = rooms.map(room => ({
+        roomId: room._id,
+        roomName: room.name,
+        totalSpent: spendMap[room._id.toString()] || 0
+    }));
+
+    return res.status(200).json({
+        category: 'success',
+        message: 'Spends retrieved successfully',
+        data: spendsByRoom
+    });
+});
+
+module.exports = { registerUser, loginUser, current, validateUser, logoutUser, addIncome, fetchIncomes, updateIncome, deleteIncome, addMethod, getMethods, deleteMethod, fetchIncomeTimePeriod, fetchSpendsTimePeriod };
