@@ -11,6 +11,6 @@ jobs:
       with:
        node-version: 20
     - name: install dependencies
-      run: npm ci
+      run: npm install --prefer-offline --no-audit --progress=false 
     - name: Run tests
       run: npm test
