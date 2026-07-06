@@ -14,3 +14,17 @@ jobs:
       run: npm install --prefer-offline --no-audit --progress=false 
     - name: Run tests
       run: npm test
+ deploy:
+  needs: test
+  runs-on: ubuntu-latest
+  steps:
+    - name: Get Code
+      uses: actions/checkout@v3
+    - name: Install node js
+      uses: actions/setup-node@v3
+      with:
+       node-version: 20
+    - name: install dependencies
+      run: npm install --prefer-offline --no-audit --progress=false 
+    - name: deployment
+      run: echo "deploying.."
